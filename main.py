@@ -4,6 +4,24 @@ from enum import Enum
 import uuid
 from typing import Literal
 
+class Notification():
+    def __init__(self, id: int, message: str, receipient_id: int, created_at=None):
+        self.id = id
+        self.message = message
+        self.receipient_id = receipient_id
+        self.created_at = created_at or datetime.now().isoformat()
+        self.is_read = False
+
+    def send(self):
+        if self.receipient_id in USERS.keys():
+            receipient = USERS[self.receipient_id]
+            receipient._notifications.append(self)
+            print("Xabarnoma yuborildi.")
+        else:
+            raise ValueError(f"Qabul qilishi uchun ID: {self.receipient_id}ga ega foydalanuvchi topilmadi.")
+
+    def mark_as_read(self):
+        self.is_read = True
 
 class Assignment:
     def __init__(self, id: int, title: str, description: str, deadline: str, subject: str, teacher_id: int, class_id: str):
@@ -71,7 +89,7 @@ class AbstractRole(ABC):
         pass
 
 class User(AbstractRole):
-    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, role: User_role, _notifications = None,_created_at: str = None):
+    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, role: User_role, _notifications: list[Notification] = None,_created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, _created_at)
         self.role = role
         if _notifications is None:
@@ -111,7 +129,7 @@ class User(AbstractRole):
 
 class Student(User):
     def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str,  
-                grade: str, _notifications = None, _created_at: str = None):
+                grade: str, _notifications: list[Notification] = None, _created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, User_role.STUDENT, _notifications, _created_at)
         self.grade = grade
         self.subjects: dict[str, int] = {} # {Subject Name: Teacher ID}
@@ -139,7 +157,8 @@ class Student(User):
         return round(total / count, 2)
 
 class Teacher(User):
-    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, _notifications = None,_created_at: str = None):
+    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, 
+                _notifications: list[Notification] = None,_created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, User_role.TEACHER, _notifications, _created_at)
         self.subjects : list[str] = [] # [subject name 1, subject name 2, ...]
         self.classes: list[str] = [] # [class id 1, class id 2, ...]
@@ -171,7 +190,8 @@ class Teacher(User):
         raise ValueError(f"O'quvchi {student_id} topilmadi.")
 
 class Parent(User):
-    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, children: list[int], _notifications = None,_created_at: str = None):
+    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, 
+                children: list[int], _notifications: list[Notification] = None,_created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, User_role.PARENT , _notifications, _created_at)
         self.children = children # list of student ids
 
@@ -206,7 +226,8 @@ class Parent(User):
             raise ValueError(f"O'quvchi {child_id} topilmadi.")
 
 class Admin(User):
-    def __init__(self,  _id: int, _full_name: str, _email: str, _password_hash: str, permissions: list[str], _notifications = None,_created_at: str = None):
+    def __init__(self,  _id: int, _full_name: str, _email: str, _password_hash: str, 
+                permissions: list[str], _notifications: list[Notification] = None,_created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, User_role.PARENT , _notifications, _created_at)
         self.permissions = permissions # list of permissions
     
@@ -305,9 +326,7 @@ class Schedule:
         else:
             print(f"Dars jadvalida {time} vaqt oralig'ida dars mavjud emas.")
 
-class Notification():
-    def __init__(self, id: int, message: str, receipent_id: int, created_at=None):
-        self.id = id
+
         
 
 
