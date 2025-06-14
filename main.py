@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import uuid
 from typing import Literal
+import hashlib
 
 class Notification():
     def __init__(self, id: int, message: str, receipient_id: int, created_at=None):
@@ -73,12 +74,17 @@ class User_role(Enum): #For User
     PARENT = "Parent"
 
 class AbstractRole(ABC):
-    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, _created_at: str = None):
+    def __init__(self, _id: int, _full_name: str, _email: str, _password: str, _created_at: str = None):
         self._id = _id
         self._full_name = _full_name
         self._email = _email
-        self._password_hush = _password_hash
+        self._password_hush = self.password_hush_func(_password)
         self._created_at = _created_at or datetime.now().isoformat()
+
+    def password_hush_func(password):
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def check_password(self, )
 
     @abstractmethod
     def get_profile(self):
@@ -89,9 +95,12 @@ class AbstractRole(ABC):
         pass
 
 class User(AbstractRole):
-    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, role: User_role, _notifications: list[Notification] = None,_created_at: str = None):
+    def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, 
+                phone: str, address: str, role: User_role, _notifications: list[Notification] = None,_created_at: str = None):
         super().__init__(_id, _full_name, _email, _password_hash, _created_at)
         self.role = role
+        self.phone = phone
+        self.address = address
         if _notifications is None:
             self._notifications = []
         else:
@@ -102,6 +111,8 @@ class User(AbstractRole):
             "id": self._id,
             "full name": self._full_name,
             "email": self._email,
+            "phone" : self.phone,
+            "address" : self.address,
             "role": self.role.value,
             "created at": self._created_at
         }
@@ -129,8 +140,8 @@ class User(AbstractRole):
 
 class Student(User):
     def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str,  
-                grade: str, _notifications: list[Notification] = None, _created_at: str = None):
-        super().__init__(_id, _full_name, _email, _password_hash, User_role.STUDENT, _notifications, _created_at)
+                grade: str, phone: str=None, address: str=None, _notifications: list[Notification] = None, _created_at: str = None):
+        super().__init__(_id, _full_name, _email, _password_hash, phone, address, User_role.STUDENT, _notifications, _created_at)
         self.grade = grade
         self.subjects: dict[str, int] = {} # {Subject Name: Teacher ID}
         self.assignments: dict[str, str] = {} # {Assignment ID: status}
@@ -158,8 +169,8 @@ class Student(User):
 
 class Teacher(User):
     def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, 
-                _notifications: list[Notification] = None,_created_at: str = None):
-        super().__init__(_id, _full_name, _email, _password_hash, User_role.TEACHER, _notifications, _created_at)
+                phone: str = None, address: str = None, _notifications: list[Notification] = None,_created_at: str = None):
+        super().__init__(_id, _full_name, _email, _password_hash, phone, address, User_role.TEACHER, _notifications, _created_at)
         self.subjects : list[str] = [] # [subject name 1, subject name 2, ...]
         self.classes: list[str] = [] # [class id 1, class id 2, ...]
         self.assignments: dict[str, Assignment] = {} # {assignment id: Assignment}
@@ -191,8 +202,8 @@ class Teacher(User):
 
 class Parent(User):
     def __init__(self, _id: int, _full_name: str, _email: str, _password_hash: str, 
-                children: list[int], _notifications: list[Notification] = None,_created_at: str = None):
-        super().__init__(_id, _full_name, _email, _password_hash, User_role.PARENT , _notifications, _created_at)
+                children: list[int], phone: str=None, address: str=None, _notifications: list[Notification] = None,_created_at: str = None):
+        super().__init__(_id, _full_name, _email, _password_hash, phone, address, User_role.PARENT, _notifications, _created_at)
         self.children = children # list of student ids
 
     def view_child_grades(self, child_id: int):
@@ -227,8 +238,8 @@ class Parent(User):
 
 class Admin(User):
     def __init__(self,  _id: int, _full_name: str, _email: str, _password_hash: str, 
-                permissions: list[str], _notifications: list[Notification] = None,_created_at: str = None):
-        super().__init__(_id, _full_name, _email, _password_hash, User_role.PARENT , _notifications, _created_at)
+                permissions: list[str], phone: str=None, address: str=None, _notifications: list[Notification] = None,_created_at: str = None):
+        super().__init__(_id, _full_name, _email, _password_hash, phone, address, User_role.PARENT , _notifications, _created_at)
         self.permissions = permissions # list of permissions
     
     def add_user(self, user: User): # A PERENT CLASS, MIGHT CLASH
