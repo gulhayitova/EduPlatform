@@ -10,10 +10,11 @@ import csv
 from openpyxl import Workbook
 
 class Notification():
-    def __init__(self, id: str, message: str, receipients: str, created_at=None): # receipients include classroom name
+    def __init__(self, id: str, message: str, receipients: str = None, receipient: int = None, created_at=None): # receipients include classroom name
         self.id = id
         self.message = message
         self.receipients = receipients
+        self.receipient = receipient
         self.created_at = created_at or datetime.now().isoformat()
         self.is_read = False
 
@@ -29,17 +30,23 @@ class Notification():
     def send(self):
         count_s = 0
         count_p = 0
-        for student in STUDENTS.values():
-            if student.grade == self.receipients:
-                receipient = STUDENTS[student._id]
-                receipient._notifications.append(self)
-                receipient.notifications.append(self.message)
-                count_s += 1
-                receipient_p = PARENTS[student.parent]
-                receipient_p._notifications.append(self)
-                receipient_p.notifications.append(self.message)
-                count_p += 1
-        print(f"Xabar {count_s} o'quvchi va {count_p} ota-onalarga yuborildi.")
+        if self.receipients:
+            for student in STUDENTS.values():
+                if student.grade == self.receipients:
+                    receipient = STUDENTS[student._id]
+                    receipient._notifications.append(self)
+                    receipient.notifications.append(self.message)
+                    count_s += 1
+                    receipient_p = PARENTS[student.parent]
+                    receipient_p._notifications.append(self)
+                    receipient_p.notifications.append(self.message)
+                    count_p += 1
+            print(f"Xabar {count_s} o'quvchi va {count_p} ota-onalarga yuborildi.")
+        elif self.receipient:
+            for person in USERS.values():
+                if person._id == self.receipient:
+                    person._notifications.append(self)
+                    person.notifications.append(self.message)
 
     def mark_as_read(self):
         self.is_read = True
@@ -595,6 +602,8 @@ class Admin(User):
 
     
     def add_user(self, user: User): # A PERENT CLASS, MIGHT CLASH
+        if 'add_user' not in self.permissions:
+            raise ValueError("Sizning foydalanuvchi qo'shishga ruxsatingiz yo'q.")
         USERS[user._id] = user
         match user.role.name:
             case "TEACHER":
@@ -607,6 +616,8 @@ class Admin(User):
                 ADMINS[user._id] = user
 
     def remove_user(self, user_id):
+        if 'remove_user' not in self.permissions:
+            raise ValueError("Sizning foydalanuvchini o'chirishga ruxsatingiz yo'q.")
         if user_id in USERS:
             match USERS[user_id].role.name:
                 case "TEACHER":

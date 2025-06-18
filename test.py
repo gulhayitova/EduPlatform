@@ -2,7 +2,7 @@ from main import *
 
 teach1 = Teacher(100, "Samantha White", 'samantha.white203@gmail.com', 'teacher', ["Math", "Physics"], '998901112233')
 stu1 = Student(200, 'Dori Kalil', 'dorikal1l@gmail.com', 'student200', '9A')
-admin1 = Admin(1000, "Bob Marley", 'bob-marley@gmail.com', 'bobm@rley', []) # adding admin manually
+admin1 = Admin(1000, "Bob Marley", 'bob-marley@gmail.com', 'bobm@rley', ['add_user', 'remove_user']) # adding admin manually; permissions
 USERS[admin1._id] = admin1
 ADMINS[admin1._id] = admin1
 
